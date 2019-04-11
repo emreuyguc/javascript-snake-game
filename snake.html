@@ -1,0 +1,263 @@
+<html>
+<head>
+
+</head>
+<body>
+<canvas id="gameArea">
+</canvas>
+<script>
+        class SnakeGame{
+            constructor(){
+				this.linesAreCreated = false;
+				this.foodCount = 0;
+                this.yon = -1;
+				//VE USTUNDE CIKAMYACA
+                this.gameCanvas = document.getElementById("gameArea");
+                this.gameCanvas.width = 500;
+                this.gameCanvas.height = 500;
+				
+                this.foodState = 0;
+                this.shapeArea = this.gameCanvas.getContext('2d');
+                this.elements = [];
+                this.dieState = 0;
+                this.pressedKey = '';
+
+                this.foodDim = 50; //food rectangel w / h
+                this.runDim = 50; //for running snake dimension
+				this.lineDim = 50;
+				
+				
+                this.createElement('snakeHead',0,0,50,50,"red");
+                this.mySnake = new Array();
+				this.mySnake[0] = ['snakeHead',0,0,50,50,"red"];
+				
+				this.walkHistory = new Array();
+
+                this.nowX = 0;
+                this.nowY = 0;
+
+				this.gameCooordinates = new Array();
+				var coordCount = (this.gameCanvas.width / this.runDim)  * (this.gameCanvas.height / this.runDim);
+				
+				var sx = 0;
+				var sy = 0;
+				
+					for(sx=0; sx < this.gameCanvas.width-50; sx += this.lineDim){
+						for(sy=0; sy < this.gameCanvas.width-50; sy += this.lineDim){
+						 this.gameCooordinates[this.gameCooordinates.length] = [[sx],[sy]];
+						}
+					}
+				
+				console.log(this.gameCooordinates);
+				
+                
+  document.addEventListener("keydown", event => {
+this.keyControl(event.keyCode);
+  console.log(event.keyCode);
+  // do something
+});
+            }
+			canvasLineDraw(){
+				for(var i = 0; i< (this.gameCanvas.width + 50); i += this.lineDim){
+					this.createLine('hline'+i,i,0,i,this.gameCanvas.height);
+				}
+				for(var i = 0; i < (this.gameCanvas.height + 50); i += this.lineDim){
+					this.createLine('wline'+i,0,i,this.gameCanvas.width,i);
+				}
+				this.linesAreCreated == true;
+			}
+			createLine(lineNum,x1,x2,y1,y2){ 
+                if (this.gameCanvas.getContext) {
+					this.shapeArea.beginPath();
+					this.shapeArea.moveTo(x1,x2);
+					this.shapeArea.lineTo(y1,y2);
+					this.shapeArea.stroke();
+                }
+            }
+            createElement(elementName,x,y,w,h,color){ 
+                if (this.gameCanvas.getContext) {
+                    this.shapeArea.fillStyle = color;
+                    this.shapeArea.fillRect(x, y, w, h);
+					this.shapeArea.shadowBlur = 10;
+					this.shapeArea.shadowColor = "black";
+                    var myRectData = {
+                        "elementName" : elementName,
+                        "x" : x,
+                        "y" : y,
+                        "w" : w,
+                        "h" : h,
+						"color" : color
+                    };
+                    this.elements.push(elementName);
+                    this.elements.push(myRectData);
+                }
+            }
+        
+            getElementProp(elementName){
+                var myIndex = this.elements.indexOf(elementName);
+                return(this.elements[myIndex + 1])
+            }
+
+            moveElement(elementName,x,y,color){
+                var elementsHistory = this.elements;
+                this.elements = [];
+                this.shapeArea.clearRect(0,0, this.gameCanvas.width, this.gameCanvas.height);
+                elementsHistory.forEach(element => {
+                    if(typeof element == 'object'){
+						
+                        if(element.elementName == elementName ){
+							if(typeof color != 'undefined'){
+								this.createElement(element.elementName,x,y,element.w,element.h,color);
+							}
+							else{
+								this.createElement(element.elementName,x,y,element.w,element.h,element.color);
+							}
+							
+                        }
+                        else{
+                            this.createElement(element.elementName,element.x,element.y,element.w,element.h,element.color);
+                        }
+                    }
+                });
+
+            }
+
+            keyControl(code){
+				
+                if(code == 65 && this.yon != 1){
+                    this.pressedKey = 'left';
+                }
+                else if(code == 68 && this.yon != 0){
+                    this.pressedKey = 'right';
+                }
+                else if(code == 87 && this.yon != 2){
+                    this.pressedKey = 'down';
+                }
+                else if(code == 83 && this.yon != 3){
+                    this.pressedKey = 'up';
+                }
+            }
+			arr_diff (a1, a2) {
+
+				var a = [], diff = [];
+
+				for (var i = 0; i < a1.length; i++) {
+					a[a1[i]] = true;
+				}
+
+				for (var i = 0; i < a2.length; i++) {
+					if (a[a2[i]]) {
+						delete a[a2[i]];
+					} else {
+						a[a2[i]] = true;
+					}
+				}
+
+				for (var k in a) {
+					diff.push(k);
+				}
+
+				return diff;
+			}
+            randomFood(){
+				
+				
+				var nonSnakeOnCoords = this.arr_diff(this.gameCooordinates,this.walkHistory);
+				
+				if(nonSnakeOnCoords.length < 98){
+					this.randFOODc = nonSnakeOnCoords[Math.floor(Math.random()*nonSnakeOnCoords.length)];
+					this.randFOODc = this.randFOODc.split(",");
+					
+					this.randFOODX = this.randFOODc[0];
+					this.randFOODY = this.randFOODc[1];
+					
+					
+				}
+				else{
+					this.randFOODX = 350;
+					this.randFOODY = 200;
+				}
+				
+				
+				this.foodCount += 1;
+				this.food = ['food'+this.foodCount,this.randFOODX,this.randFOODY,this.foodDim,this.foodDim,"blue"];
+                this.createElement('food'+this.foodCount,this.randFOODX,this.randFOODY,this.foodDim,this.foodDim,"blue");
+                this.foodState = 1;
+
+            }
+            mainLoop(){                
+				this.walkHistory[this.walkHistory.length] = [this.nowX,this.nowY];
+
+                if(this.foodState == 0){
+                    this.randomFood();
+                }
+
+				if(this.nowX == this.randFOODX && this.nowY == this.randFOODY){
+					this.mySnake[this.mySnake.length] = this.food;
+					this.foodState = 0;
+				}
+
+				
+                if(this.pressedKey == 'left' && this.yon != 1){
+                    this.nowX -= this.runDim;
+					this.yon = 0;
+					
+                }
+                else if(this.pressedKey == 'right' && this.yon != 0){
+                    this.nowX += this.runDim;
+					this.yon = 1;
+					
+                }
+                else if(this.pressedKey == 'up' && this.yon != 3){
+                    this.nowY += this.runDim;
+					this.yon = 2;
+					
+                }
+                else if(this.pressedKey == 'down' && this.yon != 2){
+                    this.nowY -= this.runDim;
+					this.yon = 3;
+					
+                }
+				
+				
+                if(this.nowX >= this.gameCanvas.width){
+                    this.nowX = 0;
+                }
+                else if(this.nowX < 0){
+                    this.nowX = this.gameCanvas.width;
+                }
+				
+                if(this.nowY >= this.gameCanvas.height){
+                    this.nowY = 0;
+                }
+                else if(this.nowY < 0){
+                    this.nowY = this.gameCanvas.height;
+                }
+				
+				for(var i = 0; i < this.mySnake.length; i++){
+				  if(this.mySnake[i][0] == 'snakeHead'){
+					this.moveElement('snakeHead',this.nowX,this.nowY);
+				  }
+				  else {
+					
+					this.moveElement(this.mySnake[i][0],this.walkHistory[this.walkHistory.length-i][0],this.walkHistory[this.walkHistory.length-i][1],"red");
+					}
+				}
+                this.walkHistory.splice(0,this.walkHistory.length-this.mySnake.length);
+				if(this.linesAreCreated == false){
+					this.canvasLineDraw();
+				}
+				
+				
+				
+            }
+
+        }
+        var game = new SnakeGame();
+        my = setInterval(function(){
+            game.mainLoop();
+        },150)
+		
+    </script>
+</body>
+</html>
